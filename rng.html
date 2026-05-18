@@ -1,54 +1,283 @@
-function roll(lever){
-  const output = document.getElementById("output");
-  const rarity = document.getElementById("rarity");
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RNG Leaderboard</title>
 
-  lever.classList.add("pulled");
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #000;
+      font-family: Arial;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
 
-  let spins = 0;
-  let speed = 40;
+    .layout {
+      display: flex;
+      gap: 60px;
+      align-items: center;
+    }
 
-  const spin = setInterval(() => {
+    .lever {
+      width: 14px;
+      height: 160px;
+      background: #aa0000;
+      border-radius: 6px;
+      position: relative;
+      cursor: pointer;
+    }
 
-    // 🎰 rolling effect (fast random flicker)
-    output.textContent = letters[Math.floor(Math.random() * letters.length)];
+    .handle {
+      width: 36px;
+      height: 36px;
+      background: #ff0000;
+      border-radius: 50%;
+      position: absolute;
+      top: -10px;
+      left: -11px;
+    }
 
-    spins++;
+    .pulled .handle {
+      top: 110px;
+    }
 
-    // ⬇️ slow down near end (this creates REAL slot feel)
-    if (spins > 6) speed = 70;
-    if (spins > 10) speed = 110;
-    if (spins > 13) speed = 160;
+    .machine {
+      text-align: center;
+    }
 
-    clearInterval(spin);
+    #output {
+      width: 220px;
+      height: 220px;
+      background: #111;
+      border: 2px solid #333;
+      border-radius: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 110px;
+      transition: color 0.1s;
+    }
 
-    const newSpin = setInterval(() => {
-      output.textContent = letters[Math.floor(Math.random() * letters.length)];
+    #rarity {
+      margin-top: 10px;
+      color: #aaa;
+    }
+
+    .board {
+      width: 220px;
+      height: 320px;
+      background: #111;
+      border: 2px solid #333;
+      padding: 10px;
+      font-size: 14px;
+      overflow-y: auto;
+      border-radius: 10px;
+    }
+
+    .title {
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      color: #ccc;
+    }
+
+    .zero {
+      color: darkred;
+    }
+
+    .topbar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      background: #111;
+      border: 1px solid #333;
+      color: white;
+      padding: 6px 10px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <button onclick="toggleAuto()">Auto: <span id="autoState">OFF</span></button>
+  <button onclick="resetAll()">Reset</button>
+</div>
+
+<div class="layout">
+
+  <div class="lever" onclick="roll(this)">
+    <div class="handle"></div>
+  </div>
+
+  <div class="machine">
+    <div id="output">-</div>
+    <div id="rarity">Pull lever</div>
+  </div>
+
+  <div class="board">
+    <div class="title">Inventory</div>
+    <div id="list"></div>
+  </div>
+
+</div>
+
+<script>
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+  let stats = JSON.parse(localStorage.getItem("stats")) || {};
+  let inventory = JSON.parse(localStorage.getItem("inv")) || {};
+
+  letters.forEach(l => {
+    if (!stats[l]) stats[l] = 0;
+    if (!inventory[l]) inventory[l] = 0;
+  });
+  if (!stats["0"]) stats["0"] = 0;
+  if (!inventory["0"]) inventory["0"] = 0;
+
+  function save(){
+    localStorage.setItem("stats", JSON.stringify(stats));
+    localStorage.setItem("inv", JSON.stringify(inventory));
+  }
+
+  function getRank(letter){
+    if(letter === "0") return 10;
+    return Math.floor(letters.indexOf(letter) / 3) + 1;
+  }
+
+  function getColor(letter){
+    if(letter === "0") return "darkred";
+
+    const i = letters.indexOf(letter);
+    const rank = Math.floor(i / 3);
+
+    const colors = [
+      "#2ecc71",
+      "#27ae60",
+      "#a3e635",
+      "#f1c40f",
+      "#f39c12",
+      "#e67e22",
+      "#e74c3c",
+      "#c0392b",
+      "#ff0000"
+    ];
+
+    return colors[rank] || "#aaa";
+  }
+
+  function updateBoard(){
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    Object.entries(inventory)
+      .sort((a,b)=>b[1]-a[1])
+      .forEach(([k,v])=>{
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `<span>${k}</span><span>x${v}</span>`;
+        if(k === "0") div.classList.add("zero");
+        list.appendChild(div);
+      });
+  }
+
+  function roll(lever){
+    const output = document.getElementById("output");
+    const rarity = document.getElementById("rarity");
+
+    lever.classList.add("pulled");
+
+    let spins = 0;
+    let speed = 60;
+
+    const loop = setInterval(() => {
+
+      const val = letters[Math.floor(Math.random() * letters.length)];
+      output.textContent = val;
+      output.style.color = getColor(val);
+
       spins++;
 
-      // 🎯 stop condition
-      if (spins > 18) {
-        clearInterval(newSpin);
-        lever.classList.remove("pulled");
+      if(spins > 8) speed = 90;
+      if(spins > 12) speed = 140;
+      if(spins > 16) speed = 200;
 
-        // 🎲 final roll (your original logic unchanged)
-        const pick = Math.random() < 1/220
-          ? "0"
-          : letters[Math.floor(Math.random() * letters.length)];
+      clearInterval(loop);
 
-        stats[pick]++;
-        inventory[pick]++;
+      const spin = setInterval(() => {
 
-        output.textContent = pick;
+        const val2 = letters[Math.floor(Math.random() * letters.length)];
+        output.textContent = val2;
+        output.style.color = getColor(val2);
 
-        rarity.textContent = (pick === "0")
-          ? "MYTHIC (0)"
-          : "Rank " + getRank(pick);
+        spins++;
 
-        save();
-        updateBoard();
-      }
+        if(spins > 22){
+          clearInterval(spin);
+          lever.classList.remove("pulled");
+
+          const pick = Math.random() < 1/220
+            ? "0"
+            : letters[Math.floor(Math.random() * letters.length)];
+
+          stats[pick]++;
+          inventory[pick]++;
+
+          output.textContent = pick;
+          output.style.color = getColor(pick);
+
+          rarity.textContent = pick === "0"
+            ? "MYTHIC (0)"
+            : "Rank " + getRank(pick);
+
+          save();
+          updateBoard();
+        }
+
+      }, speed);
 
     }, speed);
+  }
 
-  }, speed);
-}
+  let auto = false;
+  let interval;
+
+  function toggleAuto(){
+    auto = !auto;
+    document.getElementById("autoState").textContent = auto ? "ON" : "OFF";
+
+    if(auto){
+      interval = setInterval(()=>roll(document.querySelector(".lever")), 1200);
+    } else {
+      clearInterval(interval);
+    }
+  }
+
+  function resetAll(){
+    if(confirm("Reset everything?")){
+      localStorage.clear();
+      location.reload();
+    }
+  }
+
+  updateBoard();
+</script>
+
+</body>
+</html>
