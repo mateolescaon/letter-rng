@@ -1,25 +1,80 @@
-function updateBoard(){
-  const list = document.getElementById("list");
-  list.innerHTML = "";
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leaderboard</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: white;
+      font-family: Arial;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .board {
+      width: 300px;
+      height: 400px;
+      background: #111;
+      border: 1px solid #333;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="board">
+  <b>Leaderboard</b>
+  <div id="list"></div>
+</div>
+
+<script>
+const letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+let inventory=JSON.parse(localStorage.getItem("inv"))||{};
+
+function getColor(letter){
+  if(letter==="0") return "darkred";
+
+  const i=letters.indexOf(letter);
+  const rank=Math.floor(i/3);
+
+  const colors=[
+    "#2ecc71","#27ae60","#a3e635",
+    "#f1c40f","#f39c12","#e67e22",
+    "#e74c3c","#c0392b","#ff0000"
+  ];
+
+  return colors[rank]||"#aaa";
+}
+
+function load(){
+  const list=document.getElementById("list");
+  list.innerHTML="";
 
   Object.entries(inventory)
     .sort((a,b)=>b[1]-a[1])
     .forEach(([k,v])=>{
-      const div = document.createElement("div");
-      div.className = "item";
-
-      const left = document.createElement("span");
-      left.textContent = k;
-      left.style.color = getColor(k);
-
-      const right = document.createElement("span");
-      right.textContent = "x" + v;
-      right.style.color = getColor(k);
-
-      if(k === "0") left.style.fontWeight = "bold";
-
-      div.appendChild(left);
-      div.appendChild(right);
+      const div=document.createElement("div");
+      div.className="item";
+      div.innerHTML=`<span style="color:${getColor(k)}">${k}</span><span>x${v}</span>`;
       list.appendChild(div);
     });
 }
+
+load();
+</script>
+
+</body>
+</html>
