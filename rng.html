@@ -6,55 +6,65 @@
   <style>
     body {
       margin: 0;
-      height: 100vh;
-      background: #000;
-      font-family: Arial;
+      background: black;
       color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      font-family: Arial;
+      overflow: hidden;
     }
 
+    .screen {
+      display: none;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .active {
+      display: flex;
+    }
+
+    button {
+      padding: 8px 12px;
+      margin: 5px;
+      background: #222;
+      border: 1px solid #444;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* RNG UI */
     .layout {
       display: flex;
       gap: 60px;
       align-items: center;
     }
 
-    .machine {
-      text-align: center;
-    }
-
     #output {
-      width: 220px;
-      height: 220px;
+      width: 200px;
+      height: 200px;
       background: #111;
       border: 2px solid #333;
-      border-radius: 14px;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 110px;
-    }
-
-    #rarity {
-      margin-top: 10px;
-      color: #aaa;
+      font-size: 90px;
     }
 
     .lever {
       width: 14px;
       height: 160px;
       background: #aa0000;
-      border-radius: 6px;
       position: relative;
+      border-radius: 6px;
       cursor: pointer;
     }
 
     .handle {
       width: 36px;
       height: 36px;
-      background: #ff0000;
+      background: red;
       border-radius: 50%;
       position: absolute;
       top: -10px;
@@ -69,103 +79,147 @@
       width: 200px;
       height: 300px;
       background: #111;
-      border: 2px solid #333;
+      border: 1px solid #333;
       padding: 10px;
       overflow-y: auto;
     }
 
-    .item {
+    .topbar {
+      position: absolute;
+      top: 10px;
+      width: 100%;
       display: flex;
       justify-content: space-between;
-      margin-bottom: 6px;
-      color: #ccc;
+      padding: 0 10px;
     }
-
-    .zero { color: darkred; }
-
-    .r1 { color: #2ecc71; }
-    .r2 { color: #27ae60; }
-    .r3 { color: #a3e635; }
-    .r4 { color: #f1c40f; }
-    .r5 { color: #f39c12; }
-    .r6 { color: #e67e22; }
-    .r7 { color: #e74c3c; }
-    .r8 { color: #c0392b; }
-    .r9 { color: #ff0000; }
-    .r10 { color: #7a0000; }
   </style>
 </head>
 
 <body>
 
-<div class="layout">
+<!-- MENU -->
+<div class="screen active" id="menu">
+  <h1>RNG HUB</h1>
+  <button onclick="show('rng')">Play RNG</button>
+</div>
 
-  <div class="lever" onclick="roll(this)">
-    <div class="handle"></div>
+<!-- RNG -->
+<div class="screen" id="rng">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div>
+      <button onclick="toggleAuto()">Auto Roll: <span id="autoState">OFF</span></button>
+    </div>
+
+    <div>
+      <button onclick="goMenu()">✖</button>
+    </div>
   </div>
 
-  <div class="machine">
+  <div class="layout">
+
+    <div class="lever" onclick="roll(this)">
+      <div class="handle"></div>
+    </div>
+
     <div id="output">-</div>
-    <div id="rarity">Pull</div>
-  </div>
 
-  <div class="board">
-    <h3>Leaderboard</h3>
-    <div id="list"></div>
-  </div>
+    <div class="board">
+      <h3>Inventory</h3>
+      <div id="list"></div>
+    </div>
 
+  </div>
 </div>
 
 <script>
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-  const stats = {};
-  letters.forEach(l => stats[l] = 0);
-  stats["0"] = 0;
-
-  function getRank(l){
-    if(l==="0") return 10;
-    return Math.floor(letters.indexOf(l)/3)+1;
+  // SCREEN SYSTEM
+  function show(id){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
   }
 
-  function updateBoard(){
+  // DATA
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  let stats = JSON.parse(localStorage.getItem("stats")) || {};
+  let inventory = JSON.parse(localStorage.getItem("inv")) || {};
+
+  function save(){
+    localStorage.setItem("stats", JSON.stringify(stats));
+    localStorage.setItem("inv", JSON.stringify(inventory));
+  }
+
+  function updateInventory(){
     const list = document.getElementById("list");
     list.innerHTML = "";
 
-    Object.entries(stats).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
-      const div = document.createElement("div");
-      div.className = "item";
-      div.innerHTML = `<span>${k}</span><span>${v}</span>`;
-      if(k==="0") div.classList.add("zero");
-      list.appendChild(div);
-    });
+    Object.entries(inventory)
+      .sort((a,b)=>b[1]-a[1])
+      .forEach(([k,v])=>{
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `<span>${k}</span><span>x${v}</span>`;
+        list.appendChild(div);
+      });
   }
 
+  // ROLL SYSTEM
   function roll(lever){
     const out = document.getElementById("output");
-    const rarity = document.getElementById("rarity");
 
     lever.classList.add("pulled");
 
-    let i=0;
+    let i = 0;
     const spin = setInterval(()=>{
       out.textContent = letters[Math.floor(Math.random()*letters.length)];
       i++;
-      if(i>12){
+
+      if(i > 12){
         clearInterval(spin);
         lever.classList.remove("pulled");
 
-        const pick = Math.random()<1/220 ? "0" : letters[Math.floor(Math.random()*letters.length)];
-        stats[pick]++;
+        const pick = Math.random() < 1/220 ? "0" : letters[Math.floor(Math.random()*letters.length)];
+
+        stats[pick] = (stats[pick] || 0) + 1;
+        inventory[pick] = (inventory[pick] || 0) + 1;
 
         out.textContent = pick;
-        rarity.textContent = pick==="0"?"MYTHIC":("Rank "+getRank(pick));
 
-        updateBoard();
+        save();
+        updateInventory();
       }
     },70);
   }
 
-  updateBoard();
+  // AUTO ROLL
+  let autoRolling = false;
+  let autoInterval = null;
+
+  function toggleAuto(){
+    autoRolling = !autoRolling;
+
+    document.getElementById("autoState").textContent =
+      autoRolling ? "ON" : "OFF";
+
+    if(autoRolling){
+      autoInterval = setInterval(()=>{
+        roll(document.querySelector(".lever"));
+      }, 1500);
+    } else {
+      clearInterval(autoInterval);
+    }
+  }
+
+  // BACK TO MENU
+  function goMenu(){
+    show("menu");
+    autoRolling = false;
+    clearInterval(autoInterval);
+    document.getElementById("autoState").textContent = "OFF";
+  }
+
+  updateInventory();
 </script>
 
 </body>
