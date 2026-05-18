@@ -1,130 +1,137 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>RNG Game</title>
+  <title>RNG Leaderboard</title>
 
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       height: 100vh;
-    }
-
-    .card {
-      background: white;
-      width: 420px;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-
-    h1 {
-      margin: 0 0 10px;
-      font-size: 22px;
-    }
-
-    #output {
-      width: 160px;
-      height: 160px;
-      margin: 20px auto;
-      border-radius: 12px;
-      border: 2px solid #ddd;
+      background: #000;
+      font-family: Arial;
+      color: white;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 60px;
-      background: #fafafa;
-    }
-
-    button {
-      padding: 10px 14px;
-      margin: 6px;
-      border: none;
-      border-radius: 8px;
-      background: #1a73e8;
-      color: white;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    button:hover {
-      background: #1558b0;
-    }
-
-    .secondary {
-      background: #eee;
-      color: #333;
-    }
-
-    .secondary:hover {
-      background: #ddd;
+      overflow: hidden;
     }
 
     .layout {
       display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 15px;
+      gap: 60px;
+      align-items: center;
     }
 
-    .box {
-      flex: 1;
-      background: #fafafa;
-      border-radius: 10px;
+    .lever {
+      width: 14px;
+      height: 160px;
+      background: #aa0000;
+      border-radius: 6px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .handle {
+      width: 36px;
+      height: 36px;
+      background: #ff0000;
+      border-radius: 50%;
+      position: absolute;
+      top: -10px;
+      left: -11px;
+    }
+
+    .pulled .handle {
+      top: 110px;
+    }
+
+    .machine {
+      text-align: center;
+    }
+
+    #output {
+      width: 220px;
+      height: 220px;
+      background: #111;
+      border: 2px solid #333;
+      border-radius: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 110px;
+    }
+
+    #rarity {
+      margin-top: 10px;
+      color: #aaa;
+    }
+
+    .board {
+      width: 200px;
+      height: 300px;
+      background: #111;
+      border: 2px solid #333;
       padding: 10px;
-      height: 200px;
+      font-size: 14px;
       overflow-y: auto;
-      border: 1px solid #eee;
-      font-size: 13px;
+    }
+
+    .title {
+      margin-bottom: 10px;
+      font-weight: bold;
     }
 
     .item {
       display: flex;
       justify-content: space-between;
-      padding: 4px 0;
-      border-bottom: 1px solid #eee;
+      margin-bottom: 6px;
     }
 
+    .zero {
+      color: darkred;
+    }
+
+    /* TOP BUTTONS */
     .topbar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
       display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
+      gap: 10px;
+    }
+
+    button {
+      background: #222;
+      border: 1px solid #444;
+      color: white;
+      padding: 6px 10px;
+      cursor: pointer;
     }
   </style>
 </head>
 
 <body>
 
-<div class="card">
+<!-- TOP UI -->
+<div class="topbar">
+  <button onclick="toggleAuto()">Auto: <span id="autoState">OFF</span></button>
+  <button onclick="resetAll()">Reset</button>
+</div>
 
-  <div class="topbar">
-    <button class="secondary" onclick="goMenu()">← Menu</button>
-    <button class="secondary" onclick="toggleAuto()">
-      Auto: <span id="autoState">OFF</span>
-    </button>
+<div class="layout">
+
+  <div class="lever" onclick="roll(this)">
+    <div class="handle"></div>
   </div>
 
-  <h1>RNG Game</h1>
+  <div class="machine">
+    <div id="output">-</div>
+    <div id="rarity">Pull lever</div>
+  </div>
 
-  <div id="output">-</div>
-
-  <button onclick="roll()">Roll</button>
-
-  <div class="layout">
-    <div class="box">
-      <b>Inventory</b>
-      <div id="inv"></div>
-    </div>
-
-    <div class="box">
-      <b>Stats</b>
-      <div id="stats"></div>
-    </div>
+  <div class="board">
+    <div class="title">Inventory</div>
+    <div id="list"></div>
   </div>
 
 </div>
@@ -133,41 +140,68 @@
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
   let stats = JSON.parse(localStorage.getItem("stats")) || {};
-  let inv = JSON.parse(localStorage.getItem("inv")) || {};
+  let inventory = JSON.parse(localStorage.getItem("inv")) || {};
+
+  letters.forEach(l => {
+    if (!stats[l]) stats[l] = 0;
+    if (!inventory[l]) inventory[l] = 0;
+  });
+  if (!stats["0"]) stats["0"] = 0;
+  if (!inventory["0"]) inventory["0"] = 0;
 
   function save(){
     localStorage.setItem("stats", JSON.stringify(stats));
-    localStorage.setItem("inv", JSON.stringify(inv));
+    localStorage.setItem("inv", JSON.stringify(inventory));
   }
 
-  function roll(){
-    const pick = Math.random() < 0.03 ? "0" : letters[Math.floor(Math.random()*letters.length)];
+  function updateBoard(){
+    const list = document.getElementById("list");
+    list.innerHTML = "";
 
-    stats[pick] = (stats[pick] || 0) + 1;
-    inv[pick] = (inv[pick] || 0) + 1;
-
-    document.getElementById("output").textContent = pick;
-
-    save();
-    render();
+    Object.entries(inventory)
+      .sort((a,b)=>b[1]-a[1])
+      .forEach(([k,v])=>{
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `<span>${k}</span><span>x${v}</span>`;
+        if(k==="0") div.classList.add("zero");
+        list.appendChild(div);
+      });
   }
 
-  function render(){
-    const invBox = document.getElementById("inv");
-    const statsBox = document.getElementById("stats");
+  function roll(lever){
+    const output = document.getElementById("output");
+    const rarity = document.getElementById("rarity");
 
-    invBox.innerHTML = "";
-    statsBox.innerHTML = "";
+    lever.classList.add("pulled");
 
-    Object.entries(inv).forEach(([k,v])=>{
-      invBox.innerHTML += `<div class="item"><span>${k}</span><span>${v}</span></div>`;
-    });
+    let spins = 0;
 
-    Object.entries(stats).forEach(([k,v])=>{
-      statsBox.innerHTML += `<div class="item"><span>${k}</span><span>${v}</span></div>`;
-    });
+    const spin = setInterval(() => {
+      output.textContent = letters[Math.floor(Math.random()*letters.length)];
+      spins++;
+
+      if(spins > 12){
+        clearInterval(spin);
+        lever.classList.remove("pulled");
+
+        const pick = Math.random() < 1/220
+          ? "0"
+          : letters[Math.floor(Math.random()*letters.length)];
+
+        stats[pick]++;
+        inventory[pick]++;
+
+        output.textContent = pick;
+        rarity.textContent = pick === "0" ? "MYTHIC (0)" : "Rank " + (Math.floor(letters.indexOf(pick)/3)+1);
+
+        save();
+        updateBoard();
+      }
+    },70);
   }
 
+  // AUTO ROLL
   let auto = false;
   let interval;
 
@@ -176,17 +210,20 @@
     document.getElementById("autoState").textContent = auto ? "ON" : "OFF";
 
     if(auto){
-      interval = setInterval(roll, 1200);
+      interval = setInterval(()=>roll(document.querySelector(".lever")), 1200);
     } else {
       clearInterval(interval);
     }
   }
 
-  function goMenu(){
-    window.location.href = "index.html";
+  function resetAll(){
+    if(confirm("Reset everything?")){
+      localStorage.clear();
+      location.reload();
+    }
   }
 
-  render();
+  updateBoard();
 </script>
 
 </body>
