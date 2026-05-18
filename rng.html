@@ -1,3 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RNG</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: black;
+      color: white;
+      font-family: Arial;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .layout {
+      display: flex;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .lever {
+      width: 14px;
+      height: 160px;
+      background: #aa0000;
+      border-radius: 6px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .handle {
+      width: 36px;
+      height: 36px;
+      background: red;
+      border-radius: 50%;
+      position: absolute;
+      top: -10px;
+      left: -11px;
+    }
+
+    .pulled .handle {
+      top: 110px;
+    }
+
+    #output {
+      width: 220px;
+      height: 220px;
+      background: #111;
+      border: 2px solid #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 100px;
+    }
+
+    .board {
+      width: 200px;
+      height: 300px;
+      background: #111;
+      border: 1px solid #333;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <div class="lever" onclick="roll(this)">
+    <div class="handle"></div>
+  </div>
+
+  <div>
+    <div id="output">-</div>
+    <div id="rarity"></div>
+  </div>
+
+  <div class="board">
+    <b>Inventory</b>
+    <div id="list"></div>
+  </div>
+
+</div>
+
 <script>
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
@@ -45,12 +139,7 @@ function updateBoard(){
     .forEach(([k,v])=>{
       const div = document.createElement("div");
       div.className = "item";
-
-      div.innerHTML = `
-        <span style="color:${getColor(k)}">${k}</span>
-        <span style="color:${getColor(k)}">x${v}</span>
-      `;
-
+      div.innerHTML = `<span>${k}</span><span>x${v}</span>`;
       list.appendChild(div);
     });
 }
@@ -64,7 +153,7 @@ function roll(lever){
   let spins = 0;
 
   const spin = setInterval(() => {
-    const val = letters[Math.floor(Math.random() * letters.length)];
+    const val = letters[Math.floor(Math.random()*letters.length)];
     output.textContent = val;
     output.style.color = getColor(val);
 
@@ -76,7 +165,7 @@ function roll(lever){
 
       const pick = Math.random() < 1/220
         ? "0"
-        : letters[Math.floor(Math.random() * letters.length)];
+        : letters[Math.floor(Math.random()*letters.length)];
 
       stats[pick]++;
       inventory[pick]++;
@@ -95,3 +184,7 @@ function roll(lever){
 }
 
 updateBoard();
+</script>
+
+</body>
+</html>
