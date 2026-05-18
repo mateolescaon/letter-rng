@@ -17,17 +17,24 @@
 
     .board {
       width: 300px;
-      height: 400px;
+      height: 420px;
       background: #111;
       border: 1px solid #333;
       padding: 10px;
       overflow-y: auto;
+      border-radius: 10px;
     }
 
     .item {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
+      font-size: 16px;
+    }
+
+    .title {
+      margin-bottom: 10px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -35,40 +42,53 @@
 <body>
 
 <div class="board">
-  <b>Leaderboard</b>
+  <div class="title">Leaderboard</div>
   <div id="list"></div>
 </div>
 
 <script>
-const letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-let inventory=JSON.parse(localStorage.getItem("inv"))||{};
+// MUST match your game key exactly
+let inventory = JSON.parse(localStorage.getItem("inv")) || {};
 
 function getColor(letter){
-  if(letter==="0") return "darkred";
+  if(letter === "0") return "darkred";
 
-  const i=letters.indexOf(letter);
-  const rank=Math.floor(i/3);
+  const i = letters.indexOf(letter);
+  const rank = Math.floor(i / 3);
 
-  const colors=[
+  const colors = [
     "#2ecc71","#27ae60","#a3e635",
     "#f1c40f","#f39c12","#e67e22",
     "#e74c3c","#c0392b","#ff0000"
   ];
 
-  return colors[rank]||"#aaa";
+  return colors[rank] || "#aaa";
 }
 
 function load(){
-  const list=document.getElementById("list");
-  list.innerHTML="";
+  const list = document.getElementById("list");
+  list.innerHTML = "";
 
-  Object.entries(inventory)
+  const entries = Object.entries(inventory);
+
+  if(entries.length === 0){
+    list.innerHTML = "<div>No data yet — roll first</div>";
+    return;
+  }
+
+  entries
     .sort((a,b)=>b[1]-a[1])
     .forEach(([k,v])=>{
-      const div=document.createElement("div");
-      div.className="item";
-      div.innerHTML=`<span style="color:${getColor(k)}">${k}</span><span>x${v}</span>`;
+      const div = document.createElement("div");
+      div.className = "item";
+
+      div.innerHTML = `
+        <span style="color:${getColor(k)}">${k}</span>
+        <span style="color:${getColor(k)}">x${v}</span>
+      `;
+
       list.appendChild(div);
     });
 }
