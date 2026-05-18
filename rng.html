@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>RNG</title>
+  <title>RNG Game</title>
 
   <style>
     body {
       margin: 0;
       height: 100vh;
-      background: black;
+      background: #000;
       color: white;
       font-family: Arial;
       display: flex;
@@ -56,8 +56,8 @@
     }
 
     .board {
-      width: 200px;
-      height: 300px;
+      width: 220px;
+      height: 320px;
       background: #111;
       border: 1px solid #333;
       padding: 10px;
@@ -93,105 +93,98 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+let stats = JSON.parse(localStorage.getItem("stats")) || {};
+let inventory = JSON.parse(localStorage.getItem("inv")) || {};
 
-  let stats = JSON.parse(localStorage.getItem("stats")) || {};
-  let inventory = JSON.parse(localStorage.getItem("inv")) || {};
-
-  letters.forEach(l => {
-    if (!stats[l]) stats[l] = 0;
-    if (!inventory[l]) inventory[l] = 0;
-  });
-  if (!stats["0"]) stats["0"] = 0;
-  if (!inventory["0"]) inventory["0"] = 0;
-
-  function save(){
-    localStorage.setItem("stats", JSON.stringify(stats));
-    localStorage.setItem("inv", JSON.stringify(inventory));
-  }
-
-  function getRank(letter){
-    if(letter === "0") return 10;
-    return Math.floor(letters.indexOf(letter) / 3) + 1;
-  }
-
-  function getColor(letter){
-    if(letter === "0") return "darkred";
-
-    const i = letters.indexOf(letter);
-    const rank = Math.floor(i / 3);
-
-    const colors = [
-      "#2ecc71","#27ae60","#a3e635",
-      "#f1c40f","#f39c12","#e67e22",
-      "#e74c3c","#c0392b","#ff0000"
-    ];
-
-    return colors[rank] || "#aaa";
-  }
-
-  function updateBoard(){
-    const list = document.getElementById("list");
-    if(!list) return;
-
-    list.innerHTML = "";
-
-    Object.entries(inventory)
-      .sort((a,b)=>b[1]-a[1])
-      .forEach(([k,v])=>{
-        const div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `<span>${k}</span><span>x${v}</span>`;
-        list.appendChild(div);
-      });
-  }
-
-  window.roll = function(lever){
-    const output = document.getElementById("output");
-    const rarity = document.getElementById("rarity");
-
-    if(!output || !rarity) return;
-
-    lever.classList.add("pulled");
-
-    let spins = 0;
-
-    const spin = setInterval(() => {
-      const val = letters[Math.floor(Math.random()*letters.length)];
-      output.textContent = val;
-      output.style.color = getColor(val);
-
-      spins++;
-
-      if(spins > 22){
-        clearInterval(spin);
-        lever.classList.remove("pulled");
-
-        const pick = Math.random() < 1/220
-          ? "0"
-          : letters[Math.floor(Math.random()*letters.length)];
-
-        stats[pick]++;
-        inventory[pick]++;
-
-        output.textContent = pick;
-        output.style.color = getColor(pick);
-
-        rarity.textContent = pick === "0"
-          ? "MYTHIC (0)"
-          : "Rank " + getRank(pick);
-
-        save();
-        updateBoard();
-      }
-    }, 60);
-  };
-
-  updateBoard();
-
+letters.forEach(l=>{
+  if(!stats[l]) stats[l]=0;
+  if(!inventory[l]) inventory[l]=0;
 });
+if(!stats["0"]) stats["0"]=0;
+if(!inventory["0"]) inventory["0"]=0;
+
+function save(){
+  localStorage.setItem("stats", JSON.stringify(stats));
+  localStorage.setItem("inv", JSON.stringify(inventory));
+}
+
+function getRank(letter){
+  if(letter==="0") return 10;
+  return Math.floor(letters.indexOf(letter)/3)+1;
+}
+
+function getColor(letter){
+  if(letter==="0") return "darkred";
+
+  const i = letters.indexOf(letter);
+  const rank = Math.floor(i/3);
+
+  const colors=[
+    "#2ecc71","#27ae60","#a3e635",
+    "#f1c40f","#f39c12","#e67e22",
+    "#e74c3c","#c0392b","#ff0000"
+  ];
+
+  return colors[rank]||"#aaa";
+}
+
+function updateBoard(){
+  const list=document.getElementById("list");
+  list.innerHTML="";
+
+  Object.entries(inventory)
+    .sort((a,b)=>b[1]-a[1])
+    .forEach(([k,v])=>{
+      const div=document.createElement("div");
+      div.className="item";
+      div.innerHTML=`<span style="color:${getColor(k)}">${k}</span><span style="color:${getColor(k)}">x${v}</span>`;
+      list.appendChild(div);
+    });
+}
+
+window.roll=function(lever){
+  const output=document.getElementById("output");
+  const rarity=document.getElementById("rarity");
+
+  lever.classList.add("pulled");
+
+  let spins=0;
+
+  const spin=setInterval(()=>{
+
+    const val=letters[Math.floor(Math.random()*letters.length)];
+    output.textContent=val;
+    output.style.color=getColor(val);
+
+    spins++;
+
+    if(spins>26){
+      clearInterval(spin);
+      lever.classList.remove("pulled");
+
+      const pick=Math.random()<1/220
+        ?"0"
+        :letters[Math.floor(Math.random()*letters.length)];
+
+      stats[pick]++;
+      inventory[pick]++;
+
+      output.textContent=pick;
+      output.style.color=getColor(pick);
+
+      rarity.textContent=pick==="0"
+        ?"MYTHIC (0)"
+        :"Rank "+getRank(pick);
+
+      save();
+      updateBoard();
+    }
+  },60);
+};
+
+updateBoard();
 </script>
 
 </body>
