@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leaderboard</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      font-family: Arial;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      width: 340px;
+      background: #111;
+      border: 1px solid #333;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px;
+      border-bottom: 1px solid #222;
+      color: #ccc;
+    }
+
+    .empty {
+      color: #666;
+      margin: 20px 0;
+    }
+
+    .back {
+      display: block;
+      margin-top: 15px;
+      color: #aaa;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Leaderboard</h2>
+
+  <div id="list"></div>
+
+  <a class="back" href="index.html">← Back to Menu</a>
+</div>
+
+<script>
+  // Pull data from RNG game (same storage system)
+  const stats = JSON.parse(localStorage.getItem("stats")) || {};
+
+  function render(){
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    const entries = Object.entries(stats);
+
+    if(entries.length === 0){
+      list.innerHTML = "<div class='empty'>No data yet</div>";
+      return;
+    }
+
+    entries
+      .sort((a,b)=>b[1]-a[1])
+      .forEach(([key,val])=>{
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `<span>${key}</span><span>${val}</span>`;
+        list.appendChild(div);
+      });
+  }
+
+  render();
+</script>
+
+</body>
+</html>

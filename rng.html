@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RNG Game</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #000;
+      font-family: Arial;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .layout {
+      display: flex;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .machine {
+      text-align: center;
+    }
+
+    #output {
+      width: 220px;
+      height: 220px;
+      background: #111;
+      border: 2px solid #333;
+      border-radius: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 110px;
+    }
+
+    #rarity {
+      margin-top: 10px;
+      color: #aaa;
+    }
+
+    .lever {
+      width: 14px;
+      height: 160px;
+      background: #aa0000;
+      border-radius: 6px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .handle {
+      width: 36px;
+      height: 36px;
+      background: #ff0000;
+      border-radius: 50%;
+      position: absolute;
+      top: -10px;
+      left: -11px;
+    }
+
+    .pulled .handle {
+      top: 110px;
+    }
+
+    .board {
+      width: 200px;
+      height: 300px;
+      background: #111;
+      border: 2px solid #333;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      color: #ccc;
+    }
+
+    .zero { color: darkred; }
+
+    .r1 { color: #2ecc71; }
+    .r2 { color: #27ae60; }
+    .r3 { color: #a3e635; }
+    .r4 { color: #f1c40f; }
+    .r5 { color: #f39c12; }
+    .r6 { color: #e67e22; }
+    .r7 { color: #e74c3c; }
+    .r8 { color: #c0392b; }
+    .r9 { color: #ff0000; }
+    .r10 { color: #7a0000; }
+  </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <div class="lever" onclick="roll(this)">
+    <div class="handle"></div>
+  </div>
+
+  <div class="machine">
+    <div id="output">-</div>
+    <div id="rarity">Pull</div>
+  </div>
+
+  <div class="board">
+    <h3>Leaderboard</h3>
+    <div id="list"></div>
+  </div>
+
+</div>
+
+<script>
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const stats = {};
+  letters.forEach(l => stats[l] = 0);
+  stats["0"] = 0;
+
+  function getRank(l){
+    if(l==="0") return 10;
+    return Math.floor(letters.indexOf(l)/3)+1;
+  }
+
+  function updateBoard(){
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    Object.entries(stats).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `<span>${k}</span><span>${v}</span>`;
+      if(k==="0") div.classList.add("zero");
+      list.appendChild(div);
+    });
+  }
+
+  function roll(lever){
+    const out = document.getElementById("output");
+    const rarity = document.getElementById("rarity");
+
+    lever.classList.add("pulled");
+
+    let i=0;
+    const spin = setInterval(()=>{
+      out.textContent = letters[Math.floor(Math.random()*letters.length)];
+      i++;
+      if(i>12){
+        clearInterval(spin);
+        lever.classList.remove("pulled");
+
+        const pick = Math.random()<1/220 ? "0" : letters[Math.floor(Math.random()*letters.length)];
+        stats[pick]++;
+
+        out.textContent = pick;
+        rarity.textContent = pick==="0"?"MYTHIC":("Rank "+getRank(pick));
+
+        updateBoard();
+      }
+    },70);
+  }
+
+  updateBoard();
+</script>
+
+</body>
+</html>
