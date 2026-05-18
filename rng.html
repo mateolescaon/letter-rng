@@ -69,10 +69,27 @@
       justify-content: space-between;
       margin-bottom: 5px;
     }
+
+    .exit {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 35px;
+      height: 35px;
+      background: #111;
+      border: 1px solid #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      border-radius: 6px;
+    }
   </style>
 </head>
 
 <body>
+
+<div class="exit" onclick="goHub()">✕</div>
 
 <div class="layout">
 
@@ -93,6 +110,10 @@
 </div>
 
 <script>
+function goHub(){
+  window.location.href = "index.html";
+}
+
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 let stats = JSON.parse(localStorage.getItem("stats")) || {};
@@ -139,7 +160,7 @@ function updateBoard(){
     .forEach(([k,v])=>{
       const div=document.createElement("div");
       div.className="item";
-      div.innerHTML=`<span style="color:${getColor(k)}">${k}</span><span style="color:${getColor(k)}">x${v}</span>`;
+      div.innerHTML=`<span style="color:${getColor(k)}">${k}</span><span>x${v}</span>`;
       list.appendChild(div);
     });
 }
@@ -164,9 +185,7 @@ window.roll=function(lever){
       clearInterval(spin);
       lever.classList.remove("pulled");
 
-      const pick=Math.random()<1/220
-        ?"0"
-        :letters[Math.floor(Math.random()*letters.length)];
+      const pick=Math.random()<1/220?"0":letters[Math.floor(Math.random()*letters.length)];
 
       stats[pick]++;
       inventory[pick]++;
