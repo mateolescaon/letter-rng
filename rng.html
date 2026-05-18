@@ -22,6 +22,7 @@
       align-items: center;
     }
 
+    /* LEVER (same style, slightly cleaner) */
     .lever {
       width: 14px;
       height: 160px;
@@ -29,6 +30,7 @@
       border-radius: 6px;
       position: relative;
       cursor: pointer;
+      transition: 0.1s;
     }
 
     .handle {
@@ -45,6 +47,7 @@
       top: 110px;
     }
 
+    /* MACHINE (same, cleaner border) */
     .machine {
       text-align: center;
     }
@@ -52,8 +55,8 @@
     #output {
       width: 220px;
       height: 220px;
-      background: #111;
-      border: 2px solid #333;
+      background: #0a0a0a;
+      border: 2px solid #222;
       border-radius: 14px;
       display: flex;
       justify-content: center;
@@ -66,25 +69,29 @@
       color: #aaa;
     }
 
+    /* RIGHT PANEL (inventory/leaderboard style) */
     .board {
-      width: 200px;
-      height: 300px;
-      background: #111;
-      border: 2px solid #333;
+      width: 220px;
+      height: 320px;
+      background: #0a0a0a;
+      border: 2px solid #222;
       padding: 10px;
       font-size: 14px;
       overflow-y: auto;
+      border-radius: 10px;
     }
 
     .title {
       margin-bottom: 10px;
       font-weight: bold;
+      color: #fff;
     }
 
     .item {
       display: flex;
       justify-content: space-between;
       margin-bottom: 6px;
+      color: #ccc;
     }
 
     .zero {
@@ -101,18 +108,23 @@
     }
 
     button {
-      background: #222;
-      border: 1px solid #444;
+      background: #111;
+      border: 1px solid #333;
       color: white;
       padding: 6px 10px;
       cursor: pointer;
+      border-radius: 6px;
+    }
+
+    button:hover {
+      background: #1a1a1a;
     }
   </style>
 </head>
 
 <body>
 
-<!-- TOP UI -->
+<!-- TOP BAR -->
 <div class="topbar">
   <button onclick="toggleAuto()">Auto: <span id="autoState">OFF</span></button>
   <button onclick="resetAll()">Reset</button>
@@ -120,15 +132,18 @@
 
 <div class="layout">
 
+  <!-- LEFT LEVER -->
   <div class="lever" onclick="roll(this)">
     <div class="handle"></div>
   </div>
 
+  <!-- CENTER MACHINE -->
   <div class="machine">
     <div id="output">-</div>
     <div id="rarity">Pull lever</div>
   </div>
 
+  <!-- RIGHT INVENTORY (same position as old leaderboard) -->
   <div class="board">
     <div class="title">Inventory</div>
     <div id="list"></div>
@@ -139,6 +154,7 @@
 <script>
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
+  // ORIGINAL LOGIC (UNCHANGED)
   let stats = JSON.parse(localStorage.getItem("stats")) || {};
   let inventory = JSON.parse(localStorage.getItem("inv")) || {};
 
@@ -154,6 +170,11 @@
     localStorage.setItem("inv", JSON.stringify(inventory));
   }
 
+  function getRank(letter){
+    if(letter === "0") return 10;
+    return Math.floor(letters.indexOf(letter) / 3) + 1;
+  }
+
   function updateBoard(){
     const list = document.getElementById("list");
     list.innerHTML = "";
@@ -164,7 +185,7 @@
         const div = document.createElement("div");
         div.className = "item";
         div.innerHTML = `<span>${k}</span><span>x${v}</span>`;
-        if(k==="0") div.classList.add("zero");
+        if(k === "0") div.classList.add("zero");
         list.appendChild(div);
       });
   }
@@ -193,7 +214,9 @@
         inventory[pick]++;
 
         output.textContent = pick;
-        rarity.textContent = pick === "0" ? "MYTHIC (0)" : "Rank " + (Math.floor(letters.indexOf(pick)/3)+1);
+        rarity.textContent = (pick === "0")
+          ? "MYTHIC (0)"
+          : "Rank " + getRank(pick);
 
         save();
         updateBoard();
@@ -201,7 +224,7 @@
     },70);
   }
 
-  // AUTO ROLL
+  // AUTO ROLL (added, no gameplay change)
   let auto = false;
   let interval;
 
